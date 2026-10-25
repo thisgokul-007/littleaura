@@ -424,6 +424,10 @@ app.post('/api/notifications/subscribe', (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
-  console.log(`LittleAura Backend API running on port ${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production' || !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`LittleAura Backend API running on port ${PORT}`);
+  });
+}
+
+export default app;
