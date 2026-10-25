@@ -1,0 +1,77 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    
+    // Helper function to check if user is authenticated
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    // Helper function to check if the document belongs to the authenticated user
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+    
+    // User profile: only the user themselves can read and write their profile
+    match /users/{userId} {
+      allow read, write: if isOwner(userId);
+    }
+    
+    // Children documents: parent can only access their own registered children
+    match /children/{childId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.parentId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.parentId == request.auth.uid;
+      
+      // Subcollections within child document
+      match /{subcollection}/{document=**} {
+        allow read, write: if isAuthenticated() && get(/databases/$(database)/documents/children/$(childId)).data.parentId == request.auth.uid;
+      }
+    }
+    
+    // Top-level collections scoped by parentId
+    match /growthRecords/{recordId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.parentId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.parentId == request.auth.uid;
+    }
+    
+    match /medicalReports/{reportId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.parentId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.parentId == request.auth.uid;
+    }
+    
+    match /dailyCare/{careId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.parentId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.parentId == request.auth.uid;
+    }
+    
+    match /essentials/{itemId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.parentId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.parentId == request.auth.uid;
+    }
+    
+    match /reminders/{reminderId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.parentId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.parentId == request.auth.uid;
+    }
+    
+    match /learningActivities/{activityId} {
+      allow read: if isAuthenticated();
+      allow write: if isAuthenticated() && (resource == null || resource.data.parentId == request.auth.uid);
+    }
+    
+    match /timeline/{eventId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.parentId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.parentId == request.auth.uid;
+    }
+    
+    match /conversations/{convId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.parentId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.parentId == request.auth.uid;
+    }
+    
+    match /aiInsights/{insightId} {
+      allow read, write: if isAuthenticated() && (resource == null || resource.data.parentId == request.auth.uid);
+      allow create: if isAuthenticated() && request.resource.data.parentId == request.auth.uid;
+    }
+  }
+}

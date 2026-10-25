@@ -1,0 +1,31 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return isAuthenticated() && request.auth.uid == userId;
+    }
+
+    // Medical documents: strictly owner only, maximum 10MB, PDF/images
+    match /users/{userId}/medical/{allPaths=**} {
+      allow read, write: if isOwner(userId)
+                         && (request.resource == null || request.resource.size < 10 * 1024 * 1024);
+    }
+    
+    // Child profile photos: owner only, max 5MB, image only
+    match /users/{userId}/children/{childId}/{fileName} {
+      allow read, write: if isOwner(userId)
+                         && (request.resource == null || (request.resource.size < 5 * 1024 * 1024 && request.resource.contentType.matches('image/.*')));
+    }
+    
+    // AI Photo Insight uploads: owner only, max 10MB
+    match /users/{userId}/photo_insights/{fileName} {
+      allow read, write: if isOwner(userId)
+                         && (request.resource == null || (request.resource.size < 10 * 1024 * 1024 && request.resource.contentType.matches('image/.*')));
+    }
+  }
+}
